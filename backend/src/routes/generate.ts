@@ -119,6 +119,34 @@ router.post('/', async (req: express.Request, res: express.Response) => {
   } catch (error: any) {
     console.error(`[${requestId}] Error:`, error.message);
     
+    // If it's an OpenAI quota error, fall back to demo mode
+    if (error.message.includes('429') || error.message.includes('quota') || error.message.includes('exceeded')) {
+      console.log(`[${requestId}] OpenAI quota exceeded, falling back to demo mode...`);
+      
+      try {
+        // Step 1: Ingest content
+        const rawText = await ingestContent(input, inputType);
+        
+        // Step 2: Generate demo script
+        const script = await generateDemoScript(rawText);
+        
+        // Step 3 & 4: Generate demo audio
+        const { mp3Path, duration, size } = await generateDemoAudio(script, requestId);
+        
+        const response: GenerateResponse = {
+          id: requestId,
+          url: `/storage/${path.basename(mp3Path)}`,
+          duration,
+          size
+        };
+
+        console.log(`[${requestId}] 🎭 Fallback demo generation completed`);
+        return res.json(response);
+      } catch (demoError: any) {
+        console.error(`[${requestId}] Demo fallback failed:`, demoError.message);
+      }
+    }
+    
     if (error.message.includes('fetch')) {
       return res.status(422).json({ error: "Couldn't fetch content", message: error.message });
     }
