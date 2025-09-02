@@ -63,8 +63,8 @@ export default function Home() {
       const data: GenerateResponse = await response.json();
       setResult(data);
       setStatus('Complete!');
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
       setStatus('');
     } finally {
       setIsGenerating(false);
