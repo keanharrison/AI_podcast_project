@@ -37,6 +37,12 @@ app.get('/health', (req, res) => {
 app.get('/episodes', (req, res) => {
   try {
     const storageDir = path.join(__dirname, '../storage');
+    
+    // Create storage directory if it doesn't exist
+    if (!require('fs').existsSync(storageDir)) {
+      require('fs').mkdirSync(storageDir, { recursive: true });
+    }
+    
     const files = require('fs').readdirSync(storageDir)
       .filter((file: string) => file.endsWith('.mp3'))
       .map((file: string) => {
